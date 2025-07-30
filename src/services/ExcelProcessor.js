@@ -18,7 +18,7 @@ class ExcelProcessor {
       '1034': 'ESP', // Spanish
       '2070': 'POR', // Portuguese
       '1043': 'NLD', // Dutch
-      '1053': 'SWE', // Swedish
+      '1053': 'SVE', // Swedish
       '1044': 'NOR', // Norwegian
       '1030': 'DAN', // Danish
       '1035': 'FIN', // Finnish
