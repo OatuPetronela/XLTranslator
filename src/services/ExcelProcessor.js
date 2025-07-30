@@ -109,7 +109,7 @@ class ExcelProcessor {
         targetColumn.language
       );
 
-      // Apply translations to worksheet with style preservation
+      // Apply translations to worksheet with enhanced style preservation
       textsForThisLanguage.forEach((textInfo, index) => {
         if (translations[index]) {
           const targetAddress = XLSX.utils.encode_cell({
@@ -117,19 +117,33 @@ class ExcelProcessor {
             c: targetColumn.columnIndex
           });
           
-          // Find source cell to copy styles from
+          // Get source cell to copy styles from
           const sourceAddress = XLSX.utils.encode_cell({
             r: textInfo.row,
             c: sourceColumn.columnIndex
           });
           const sourceCell = worksheet[sourceAddress];
           
-          // Create target cell preserving original styles (gray background, etc.)
-          worksheet[targetAddress] = {
+          // Check if target cell already exists and has gray background
+          const existingTargetCell = worksheet[targetAddress];
+          const targetHasGrayBackground = existingTargetCell && this.hasGrayBackground(existingTargetCell);
+          
+          // Create target cell with proper style preservation
+          const newCell = {
             v: translations[index],
-            t: 's',
-            s: sourceCell && sourceCell.s ? { ...sourceCell.s } : undefined
+            t: 's'
           };
+          
+          // Handle style preservation logic
+          if (targetHasGrayBackground) {
+            // Target already has gray background - preserve it completely
+            newCell.s = existingTargetCell.s ? { ...existingTargetCell.s } : undefined;
+          } else if (sourceCell?.s) {
+            // Target doesn't have gray background - copy from source
+            newCell.s = { ...sourceCell.s };
+          }
+          
+          worksheet[targetAddress] = newCell;
           translatedCount++;
         }
       });
@@ -241,6 +255,8 @@ class ExcelProcessor {
       const emptyTargetColumns = targetColumns.filter(targetCol => {
         const targetAddress = XLSX.utils.encode_cell({r: R, c: targetCol.columnIndex});
         const targetCell = worksheet[targetAddress];
+        
+        // Consider cell empty if it has no text content (but might have gray background)
         return !targetCell || !targetCell.v || !targetCell.v.toString().trim();
       });
       
