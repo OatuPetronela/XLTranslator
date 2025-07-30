@@ -289,16 +289,36 @@ class ExcelProcessor {
     return true;
   }
 
-  // Check if cell has gray background
+  // Enhanced gray background detection
   hasGrayBackground(cell) {
-    if (!cell.s || !cell.s.patternType) return false;
+    if (!cell?.s) return false;
     
-    return cell.s.patternType === 'solid' && 
-           cell.s.fgColor && 
-           cell.s.fgColor.tint && 
-           cell.s.fgColor.tint < 0;
+    const style = cell.s;
+    
+    // Method 1: Check for fill pattern
+    if (style.fill && style.fill.patternType === 'solid') {
+      const fgColor = style.fill.fgColor;
+      if (fgColor) {
+        if (fgColor.rgb) {
+          const rgb = fgColor.rgb.toLowerCase();
+          return /^[a-f0-9]{2}([a-f0-9]{2})\1$/.test(rgb) && rgb !== 'ffffff' && rgb !== '000000';
+        }
+        if (fgColor.indexed && [15, 16, 22, 43, 47, 48, 49, 50].includes(fgColor.indexed)) {
+          return true;
+        }
+      }
+    }
+    
+    // Method 2: Legacy pattern check
+    if (style.patternType === 'solid' && style.fgColor) {
+      if (style.fgColor.tint && style.fgColor.tint < 0) return true;
+      if (style.fgColor.indexed && [15, 16, 22, 43, 47, 48, 49, 50].includes(style.fgColor.indexed)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
-
   // Test configuration
   async testConfiguration() {
     if (!process.env.OPENAI_API_KEY) {
