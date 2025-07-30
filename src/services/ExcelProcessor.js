@@ -1,4 +1,3 @@
-// src/services/ExcelProcessor.js - English version with style preservation
 const XLSX = require('xlsx');
 const fs = require('fs-extra');
 const path = require('path');
@@ -10,52 +9,76 @@ class ExcelProcessor {
     this.outputDir = path.join(__dirname, '../../output');
     fs.ensureDirSync(this.outputDir);
     
-    // Country code to language mapping
+    // Country code to language mapping from Askia
     this.countryToLanguage = {
-      '1031': 'DEU', // German
-      '1036': 'FRA', // French  
-      '1040': 'ITA', // Italian
-      '1034': 'ESP', // Spanish
-      '2070': 'POR', // Portuguese
-      '1043': 'NLD', // Dutch
-      '1053': 'SVE', // Swedish
-      '1044': 'NOR', // Norwegian
+      '1025': 'ARA', // Arabic (Saudi Arabia)
+      '1026': 'BGR', // Bulgarian
+      '1027': 'CAT', // Catalan
+      '1028': 'CHT', // Chinese (Taiwan)
+      '1029': 'CSY', // Czech
       '1030': 'DAN', // Danish
+      '1031': 'DEU', // German (Germany)
+      '1032': 'ELL', // Greek
+      '1033': 'ENU', // English (United States)
+      '1034': 'ESP', // Spanish (Spain Traditional)
       '1035': 'FIN', // Finnish
-      '1045': 'POL', // Polish
-      '1029': 'CZE', // Czech
+      '1036': 'FRA', // French (France)
+      '1037': 'HEB', // Hebrew
       '1038': 'HUN', // Hungarian
-      '1048': 'ROM', // Romanian
-      '1049': 'RUS', // Russian
+      '1040': 'ITA', // Italian (Italy)
       '1041': 'JPN', // Japanese
       '1042': 'KOR', // Korean
-      '2052': 'CHN', // Chinese
-      '1025': 'ARA', // Arabic
-      '2057': 'ENG'  // English
+      '1043': 'NLD', // Dutch (Netherlands)
+      '1044': 'NOR', // Norwegian (Bokmål)
+      '1045': 'PLK', // Polish
+      '1046': 'PTB', // Portuguese (Brazil)
+      '1048': 'ROM', // Romanian
+      '1049': 'RUS', // Russian
+      '1050': 'HRV', // Croatian
+      '1051': 'SKY', // Slovak
+      '1052': 'SQI', // Albanian
+      '1053': 'SVE', // Swedish
+      '1054': 'THA', // Thai
+      '1055': 'TRK', // Turkish
+      '1057': 'IND', // Indonesian
+      '1058': 'UKR', // Ukrainian
+      '1059': 'BEL', // Belarusian
+      '1060': 'SLV', // Slovenian
+      '1061': 'ETI', // Estonian
+      '1062': 'LVI', // Latvian
+      '1063': 'LTH', // Lithuanian
+      '1066': 'VIT', // Vietnamese
+      '1069': 'EUQ', // Basque
+      '1081': 'HIN', // Hindi
+      '1086': 'MSL', // Malay (Malaysia)
+      '1110': 'GLC', // Galician
+      '2052': 'CHS', // Chinese (Simplified)
+      '2057': 'ENG', // English (United Kingdom)
+      '2070': 'PTG', // Portuguese (Portugal)
+      '2074': 'SRM', // Serbian (Latin)
+      '3082': 'ESN', // Spanish (Spain Modern)
+      '3098': 'SRN', // Serbian (Cyrillic)
+      '5146': 'BSC'  // Bosnian
     };
   }
 
   // Main Excel file processing function
   async processExcelFile(filePath) {
-    console.log('📖 Reading Excel file...');
     const workbook = XLSX.readFile(filePath, { cellStyles: true });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const range = XLSX.utils.decode_range(worksheet['!ref']);
 
-    console.log('🔍 Identifying language columns...');
     const languageColumns = this.identifyLanguageColumns(worksheet, range);
     
-    console.log('📝 Found columns:', Object.keys(languageColumns).map(col => 
-      `${languageColumns[col].header} (${languageColumns[col].language})`
-    ).join(', '));
+    if (Object.keys(languageColumns).length === 0) {
+      throw new Error('No recognized country code columns found. Expected format: 1031(DEU), 1036(FRA), etc.');
+    }
 
     // Find source column (the one with most content)
     const sourceColumn = this.findSourceColumn(worksheet, range, languageColumns);
     if (!sourceColumn) {
       throw new Error('No source column with text for translation was found');
     }
-
-    console.log(`🎯 Source column: ${sourceColumn.header} (${sourceColumn.language})`);
 
     // Find target columns (empty or partially empty)
     const targetColumns = this.findTargetColumns(languageColumns, sourceColumn);
@@ -64,16 +87,10 @@ class ExcelProcessor {
       throw new Error('No target columns for translation were found');
     }
 
-    console.log(`🎯 Target columns: ${targetColumns.map(col => 
-      `${col.header} (${col.language})`
-    ).join(', ')}`);
-
     // Extract texts for translation
     const textsToTranslate = this.extractTextsForTranslation(
       worksheet, range, sourceColumn, targetColumns
     );
-
-    console.log(`📝 Found ${textsToTranslate.length} texts for translation`);
 
     if (textsToTranslate.length === 0) {
       throw new Error('No texts for translation were found');
@@ -82,8 +99,6 @@ class ExcelProcessor {
     // Translate texts
     let translatedCount = 0;
     for (const targetColumn of targetColumns) {
-      console.log(`🌐 Translating to ${targetColumn.language}...`);
-      
       const textsForThisLanguage = textsToTranslate.filter(t => 
         t.targetColumns.includes(targetColumn.columnIndex)
       );
@@ -94,7 +109,7 @@ class ExcelProcessor {
         targetColumn.language
       );
 
-      // Apply translations to worksheet WITH STYLE PRESERVATION
+      // Apply translations to worksheet with style preservation
       textsForThisLanguage.forEach((textInfo, index) => {
         if (translations[index]) {
           const targetAddress = XLSX.utils.encode_cell({
@@ -109,11 +124,10 @@ class ExcelProcessor {
           });
           const sourceCell = worksheet[sourceAddress];
           
-          // Create target cell preserving original styles
+          // Create target cell preserving original styles (gray background, etc.)
           worksheet[targetAddress] = {
             v: translations[index],
             t: 's',
-            // COPY STYLES from source cell (preserves gray background, etc.)
             s: sourceCell && sourceCell.s ? { ...sourceCell.s } : undefined
           };
           translatedCount++;
@@ -121,7 +135,7 @@ class ExcelProcessor {
       });
     }
 
-    // Save file
+    // Save processed file
     const outputFilename = `translated_${Date.now()}.xlsx`;
     const outputPath = path.join(this.outputDir, outputFilename);
     
@@ -154,12 +168,15 @@ class ExcelProcessor {
         const countryCode = match[1];
         const langCode = match[2];
         
-        columns[C] = {
-          columnIndex: C,
-          header: header,
-          countryCode: countryCode,
-          language: langCode
-        };
+        // Check if this country code is supported
+        if (this.countryToLanguage[countryCode] === langCode) {
+          columns[C] = {
+            columnIndex: C,
+            header: header,
+            countryCode: countryCode,
+            language: langCode
+          };
+        }
       }
     }
     

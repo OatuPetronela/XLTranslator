@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -224,18 +224,18 @@
     <div class="container">
         <div class="header">
             <h1>🌐 XLTranslator</h1>
-            <p>Traducere automată a fisierelor Excel </p>
+            <p>Automatic Excel file translation</p>
         </div>
 
         <div class="main-content">
             <div class="info-box">
-                <h3>📋 Cum funcționează:</h3>
+                <h3>📋 How it works:</h3>
                 <ul>
-                    <li>Uploadul fișierelor Excel cu coduri de țară ex: <strong>1031(DEU)</strong>, <strong>1036(FRA)</strong>, etc.</li>
-                    <li>Aplicația identifică automat coloana sursa</li>
-                    <li>Textele cu <strong>background gri</strong> sunt ignorate</li>
-                    <li>Tagurile HTML și scripturile Askia (ex:<strong>!!RT("TXT:41")!!</strong>, <strong>!!ON(...)!!</strong>) sunt păstrate intacte</li>
-                    <li>Traducerea se face automat în toate limbile disponibile din fișier</li>
+                    <li>Upload Excel files with country codes e.g.: <strong>1031(DEU)</strong>, <strong>1036(FRA)</strong>, etc.</li>
+                    <li>The application automatically identifies the source column</li>
+                    <li>Texts with <strong>gray background</strong> are ignored</li>
+                    <li>HTML tags and Askia scripts (e.g.:<strong>!!RT("TXT:41")!!</strong>, <strong>!!ON(...)!!</strong>) are preserved intact</li>
+                    <li>Translation is done automatically to all available languages in the file</li>
                 </ul>
             </div>
 
@@ -243,25 +243,25 @@
                 <form id="uploadForm" enctype="multipart/form-data">
                     <div class="file-upload">
                         <label for="excelFile" class="file-upload-btn">
-                            📁 Alege fișierul Excel
+                            📁 Choose Excel File
                         </label>
                         <input type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required>
                     </div>
                     
                     <div id="fileInfo" class="file-info">
-                        <p id="fileName">Niciun fișier selectat</p>
+                        <p id="fileName">No file selected</p>
                     </div>
 
                     <br>
                     <button type="submit" class="translate-btn" id="translateBtn" disabled>
-                        🚀 Începe Traducerea
+                        🚀 Start Translation
                     </button>
                 </form>
             </div>
 
             <div id="progressSection" class="progress-section">
                 <div class="spinner"></div>
-                <p id="progressText">Se procesează fișierul...</p>
+                <p id="progressText">Processing file...</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
@@ -315,7 +315,7 @@
             }, 500);
 
             try {
-                progressText.textContent = 'Se uploadează fișierul...';
+                progressText.textContent = 'Uploading file...';
                 
                 const response = await fetch('/api/translate', {
                     method: 'POST',
@@ -335,7 +335,7 @@
             } catch (error) {
                 clearInterval(progressInterval);
                 progressSection.style.display = 'none';
-                showResult({ error: 'Eroare de conexiune: ' + error.message }, false);
+                showResult({ error: 'Connection error: ' + error.message }, false);
             }
             
             translateBtn.disabled = false;
@@ -347,29 +347,31 @@
             if (success && result.success) {
                 resultContent.innerHTML = `
                     <div class="success">
-                        <h3>✅ Traducerea a fost completată cu succes!</h3>
+                        <h3>✅ Translation completed successfully!</h3>
                         <a href="${result.downloadUrl}" class="download-btn">
-                            📥 Descarcă fișierul tradus
+                            📥 Download Translated File
                         </a>
                         <div class="stats">
-                            <h4>📊 Statistici:</h4>
-                            <p><strong>Coloană sursă:</strong> ${result.stats.sourceColumn}</p>
-                            <p><strong>Coloane țintă:</strong> ${result.stats.targetColumns.join(', ')}</p>
-                            <p><strong>Texte găsite:</strong> ${result.stats.textsFound}</p>
-                            <p><strong>Traduceri aplicate:</strong> ${result.stats.translationsApplied}</p>
+                            <h4>📊 Statistics:</h4>
+                            <p><strong>Source Column:</strong> ${result.stats.sourceColumn}</p>
+                            <p><strong>Target Columns:</strong> ${result.stats.targetColumns.join(', ')}</p>
+                            <p><strong>Texts Found:</strong> ${result.stats.textsFound}</p>
+                            <p><strong>Translations Applied:</strong> ${result.stats.translationsApplied}</p>
                         </div>
                     </div>
                 `;
             } else {
                 resultContent.innerHTML = `
                     <div class="error">
-                        <h3>❌ Eroare în procesarea fișierului</h3>
-                        <p>${result.error || 'Eroare necunoscută'}</p>
+                        <h3>❌ Error processing file</h3>
+                        <p>${result.error || 'Unknown error'}</p>
                         ${result.details ? `<p><small>${result.details}</small></p>` : ''}
                     </div>
                 `;
             }
         }
+
+        // Test API configuration on page load
         fetch('/api/test')
             .then(response => response.json())
             .then(result => {
@@ -377,14 +379,15 @@
                     resultSection.style.display = 'block';
                     resultContent.innerHTML = `
                         <div class="error">
-                            <h3>⚠️ Configurație incompletă</h3>
+                            <h3>⚠️ Incomplete Configuration</h3>
                             <p>${result.error}</p>
-                            <p><small>Verifică fișierul .env și restart aplicația</small></p>
+                            <p><small>Check .env file and restart application</small></p>
                         </div>
                     `;
                 }
             })
             .catch(() => {
+                // Silent fail - API might not be ready yet
             });
     </script>
 </body>

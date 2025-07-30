@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Configurare multer pentru upload
+// Configure multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/';
@@ -32,72 +32,68 @@ const upload = multer({
     if (file.originalname.match(/\.(xlsx|xls)$/)) {
       cb(null, true);
     } else {
-      cb(new Error('Doar fișiere Excel (.xlsx, .xls) sunt permise!'), false);
+      cb(new Error('Only Excel files (.xlsx, .xls) are allowed!'), false);
     }
   }
 });
 
 const processor = new ExcelProcessor();
 
-// Servește pagina principală
+// Serve main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Endpoint principal pentru traducere
+// Main translation endpoint
 app.post('/api/translate', upload.single('excelFile'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Nu a fost uplodat niciun fișier Excel' });
+      return res.status(400).json({ error: 'No Excel file was uploaded' });
     }
-
-    console.log(`📁 Procesare fișier: ${req.file.originalname}`);
     
-    // Procesează fișierul
+    // Process the file
     const result = await processor.processExcelFile(req.file.path);
     
-    // Șterge fișierul uploadat
+    // Delete uploaded file
     fs.removeSync(req.file.path);
     
     res.json({
       success: true,
-      message: 'Traducerea a fost completată cu succes!',
+      message: 'Translation completed successfully!',
       downloadUrl: `/api/download/${result.filename}`,
       stats: result.stats
     });
 
   } catch (error) {
-    console.error('❌ Eroare:', error);
-    
-    // Șterge fișierul uploadat în caz de eroare
+    // Delete uploaded file in case of error
     if (req.file) {
       fs.removeSync(req.file.path).catch(() => {});
     }
     
     res.status(500).json({ 
-      error: 'Eroare în procesarea fișierului',
+      error: 'Error processing file',
       details: error.message 
     });
   }
 });
 
-// Download fișier tradus
+// Download translated file
 app.get('/api/download/:filename', (req, res) => {
   const filePath = path.join(__dirname, '../output', req.params.filename);
   
   if (fs.existsSync(filePath)) {
     res.download(filePath, (err) => {
       if (err) {
-        res.status(500).json({ error: 'Eroare în download' });
+        res.status(500).json({ error: 'Download error' });
       } else {
-        // Șterge fișierul după 5 minute
+        // Delete file after 5 minutes
         setTimeout(() => {
-          fs.remove(filePath).catch(console.error);
+          fs.remove(filePath).catch(() => {});
         }, 5 * 60 * 1000);
       }
     });
   } else {
-    res.status(404).json({ error: 'Fișierul nu a fost găsit' });
+    res.status(404).json({ error: 'File not found' });
   }
 });
 
@@ -105,13 +101,12 @@ app.get('/api/download/:filename', (req, res) => {
 app.get('/api/test', async (req, res) => {
   try {
     await processor.testConfiguration();
-    res.json({ success: true, message: 'Configurația este OK!' });
+    res.json({ success: true, message: 'Configuration is OK!' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Excel AI Translator pornit pe portul ${PORT}`);
-  console.log(`🌐 Deschide: http://localhost:${PORT}`);
+  // Application started successfully
 });

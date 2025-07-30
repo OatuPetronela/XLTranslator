@@ -1,4 +1,3 @@
-// src/services/TranslationService.js
 const { OpenAI } = require('openai');
 
 class TranslationService {
@@ -7,47 +6,72 @@ class TranslationService {
       apiKey: process.env.OPENAI_API_KEY
     });
     
-    // Maparea limbilor pentru prompt-uri mai clare
+    // Language mapping for clearer prompts
     this.languageNames = {
-      'ENG': 'English',
-      'FRA': 'French',
-      'DEU': 'German', 
-      'ITA': 'Italian',
-      'ESP': 'Spanish',
-      'POR': 'Portuguese',
-      'NLD': 'Dutch',
-      'SVE': 'Swedish',
-      'NOR': 'Norwegian',
+      'ARA': 'Arabic',
+      'BGR': 'Bulgarian', 
+      'CAT': 'Catalan',
+      'CHT': 'Chinese (Traditional)',
+      'CSY': 'Czech',
       'DAN': 'Danish',
+      'DEU': 'German',
+      'ELL': 'Greek',
+      'ENU': 'English (US)',
+      'ESP': 'Spanish',
       'FIN': 'Finnish',
-      'POL': 'Polish',
-      'CZE': 'Czech',
+      'FRA': 'French',
+      'HEB': 'Hebrew',
       'HUN': 'Hungarian',
-      'ROM': 'Romanian',
-      'RUS': 'Russian',
+      'ITA': 'Italian',
       'JPN': 'Japanese',
       'KOR': 'Korean',
-      'CHN': 'Chinese',
-      'ARA': 'Arabic'
+      'NLD': 'Dutch',
+      'NOR': 'Norwegian',
+      'PLK': 'Polish',
+      'PTB': 'Portuguese (Brazil)',
+      'ROM': 'Romanian',
+      'RUS': 'Russian',
+      'HRV': 'Croatian',
+      'SKY': 'Slovak',
+      'SQI': 'Albanian',
+      'SVE': 'Swedish',
+      'THA': 'Thai',
+      'TRK': 'Turkish',
+      'IND': 'Indonesian',
+      'UKR': 'Ukrainian',
+      'BEL': 'Belarusian',
+      'SLV': 'Slovenian',
+      'ETI': 'Estonian',
+      'LVI': 'Latvian',
+      'LTH': 'Lithuanian',
+      'VIT': 'Vietnamese',
+      'EUQ': 'Basque',
+      'HIN': 'Hindi',
+      'MSL': 'Malay',
+      'GLC': 'Galician',
+      'CHS': 'Chinese (Simplified)',
+      'ENG': 'English (UK)',
+      'PTG': 'Portuguese',
+      'SRM': 'Serbian (Latin)',
+      'ESN': 'Spanish (Modern)',
+      'SRN': 'Serbian (Cyrillic)',
+      'BSC': 'Bosnian'
     };
   }
 
-  // Traduce o listă de texte într-o limbă țintă
+  // Translate a list of texts to target language
   async translateTexts(texts, sourceLanguage, targetLanguage) {
     if (!texts || texts.length === 0) return [];
     
     const sourceLangName = this.languageNames[sourceLanguage] || sourceLanguage;
     const targetLangName = this.languageNames[targetLanguage] || targetLanguage;
     
-    console.log(`🔄 Traducere ${texts.length} texte din ${sourceLangName} în ${targetLangName}`);
-    
-    // Procesează în batch-uri pentru eficiență
+    // Process in batches for efficiency
     const batchSize = 15;
     const allTranslations = [];
     
     for (let i = 0; i < texts.length; i += batchSize) {
       const batch = texts.slice(i, i + batchSize);
-      console.log(`   📦 Batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(texts.length/batchSize)}`);
       
       try {
         const batchTranslations = await this.translateBatch(
@@ -55,13 +79,12 @@ class TranslationService {
         );
         allTranslations.push(...batchTranslations);
         
-        // Pauză între batch-uri pentru rate limiting
+        // Pause between batches for rate limiting
         if (i + batchSize < texts.length) {
           await this.sleep(1000);
         }
       } catch (error) {
-        console.error(`❌ Eroare batch ${Math.floor(i/batchSize) + 1}:`, error.message);
-        // Adaugă texte null pentru pozițiile care au eșuat
+        // Add null values for failed translations
         for (let j = 0; j < batch.length; j++) {
           allTranslations.push(null);
         }
@@ -71,30 +94,30 @@ class TranslationService {
     return allTranslations;
   }
 
-  // Traduce un batch de texte
+  // Translate a batch of texts
   async translateBatch(texts, sourceLanguage, targetLanguage) {
-    // Pregătește textele pentru traducere (înlocuiește tagurile cu placeholders)
+    // Prepare texts for translation (replace tags with placeholders)
     const preparedTexts = texts.map(text => this.prepareTextForTranslation(text));
     
-    // Creează prompt-ul
+    // Create the prompt
     const textList = preparedTexts.map((prepared, index) => 
       `${index + 1}. ${prepared.preparedText}`
     ).join('\n');
 
-    const prompt = `Traduce următoarele texte din ${sourceLanguage} în ${targetLanguage}.
+    const prompt = `Translate the following texts from ${sourceLanguage} to ${targetLanguage}.
 
-REGULI IMPORTANTE:
-- Păstrează EXACT toate placeholder-urile __TAG_X__ în pozițiile corecte
-- NU traduce sau modifica placeholder-urile __TAG_X__
-- Pentru texte foarte scurte (1-2 cuvinte), oferă traducerea cea mai naturală
-- Pentru texte incomplete sau trunhiate, completează logic traducerea
-- Păstrează formatarea și spațierea originală
-- Textele pot conține taguri HTML și scripturi speciale - acestea trebuie păstrate intacte
+IMPORTANT RULES:
+- Keep ALL __TAG_X__ placeholders EXACTLY in their correct positions
+- DO NOT translate or modify __TAG_X__ placeholders
+- For very short texts (1-2 words), provide the most natural translation
+- For incomplete or truncated texts, complete the translation logically
+- Preserve original formatting and spacing
+- Texts may contain HTML tags and special scripts - these must be preserved intact
 
-Texte de tradus:
+Texts to translate:
 ${textList}
 
-Răspunde DOAR cu traducerile numerotate, fără explicații:`;
+Respond ONLY with numbered translations, no explanations:`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -102,7 +125,7 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
         messages: [
           {
             role: "system",
-            content: "Tu ești un translator profesionist specializat în traducerea de interfețe și aplicații. Urmărești cu strictețe instrucțiunile privind păstrarea placeholder-urilor și formatării."
+            content: "You are a professional translator specialized in interface and application translation. You strictly follow instructions regarding placeholder preservation and formatting."
           },
           {
             role: "user",
@@ -115,7 +138,7 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
 
       const rawTranslations = this.parseResponse(response.choices[0].message.content);
       
-      // Restaurează tagurile în traduceri
+      // Restore tags in translations
       const finalTranslations = rawTranslations.map((translation, index) => {
         if (translation && preparedTexts[index]) {
           return this.restoreTagsInTranslation(
@@ -129,24 +152,23 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
       return finalTranslations;
 
     } catch (error) {
-      console.error('❌ Eroare OpenAI:', error.message);
       throw error;
     }
   }
 
-  // Pregătește textul pentru traducere (înlocuiește tagurile cu placeholders)
+  // Prepare text for translation (replace tags with placeholders)
   prepareTextForTranslation(text) {
     let preparedText = text;
     const placeholderMap = new Map();
     let tagIndex = 0;
     
-    // Pattern pentru taguri HTML
+    // HTML tags pattern
     const htmlPattern = /<[^>]+>/g;
     
-    // Pattern pentru scripturi Askia: !!ceva!!
+    // Askia scripts pattern: !!something!!
     const askiaPattern = /!!([^!]+)!!/g;
     
-    // Înlocuiește tagurile HTML
+    // Replace HTML tags
     preparedText = preparedText.replace(htmlPattern, (match) => {
       const placeholder = `__TAG_${tagIndex}__`;
       placeholderMap.set(placeholder, match);
@@ -154,7 +176,7 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
       return placeholder;
     });
     
-    // Înlocuiește scripturile Askia
+    // Replace Askia scripts
     preparedText = preparedText.replace(askiaPattern, (match) => {
       const placeholder = `__TAG_${tagIndex}__`;
       placeholderMap.set(placeholder, match);
@@ -168,11 +190,11 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
     };
   }
 
-  // Restaurează tagurile în textul tradus
+  // Restore tags in translated text
   restoreTagsInTranslation(translatedText, placeholderMap) {
     let restoredText = translatedText;
     
-    // Înlocuiește fiecare placeholder cu tagul original
+    // Replace each placeholder with original tag
     for (let [placeholder, originalTag] of placeholderMap) {
       restoredText = restoredText.replace(placeholder, originalTag);
     }
@@ -180,13 +202,13 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
     return restoredText;
   }
 
-  // Parsează răspunsul de la AI
+  // Parse AI response
   parseResponse(response) {
     const translations = [];
     const lines = response.trim().split('\n');
     
     for (const line of lines) {
-      // Caută pattern-ul: număr. text
+      // Look for pattern: number. text
       const match = line.match(/^\s*(\d+)\.\s*(.+)$/);
       if (match) {
         const index = parseInt(match[1]) - 1;
@@ -198,24 +220,22 @@ Răspunde DOAR cu traducerile numerotate, fără explicații:`;
     return translations;
   }
 
-  // Test conexiunea cu OpenAI
+  // Test connection with OpenAI
   async testConnection() {
     try {
-      const response = await this.openai.chat.completions.create({
+      await this.openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: "Hello, test connection" }],
         max_tokens: 10
       });
       
-      console.log('✅ Conexiunea cu OpenAI funcționează');
       return true;
     } catch (error) {
-      console.error('❌ Eroare conexiune OpenAI:', error.message);
-      throw new Error(`Conexiunea cu OpenAI a eșuat: ${error.message}`);
+      throw new Error(`OpenAI connection failed: ${error.message}`);
     }
   }
 
-  // Funcție helper pentru pauză
+  // Helper function for pause
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
