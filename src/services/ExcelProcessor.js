@@ -1,4 +1,4 @@
-// src/services/ExcelProcessor.js
+// src/services/ExcelProcessor.js - English version with style preservation
 const XLSX = require('xlsx');
 const fs = require('fs-extra');
 const path = require('path');
@@ -10,7 +10,7 @@ class ExcelProcessor {
     this.outputDir = path.join(__dirname, '../../output');
     fs.ensureDirSync(this.outputDir);
     
-    // Maparea codurilor de țară la limbi
+    // Country code to language mapping
     this.countryToLanguage = {
       '1031': 'DEU', // German
       '1036': 'FRA', // French  
@@ -35,54 +35,54 @@ class ExcelProcessor {
     };
   }
 
-  // Procesează fișierul Excel principal
+  // Main Excel file processing function
   async processExcelFile(filePath) {
-    console.log('📖 Citire fișier Excel...');
+    console.log('📖 Reading Excel file...');
     const workbook = XLSX.readFile(filePath, { cellStyles: true });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const range = XLSX.utils.decode_range(worksheet['!ref']);
 
-    console.log('🔍 Identificare coloane de limbi...');
+    console.log('🔍 Identifying language columns...');
     const languageColumns = this.identifyLanguageColumns(worksheet, range);
     
-    console.log('📝 Găsite coloane:', Object.keys(languageColumns).map(col => 
+    console.log('📝 Found columns:', Object.keys(languageColumns).map(col => 
       `${languageColumns[col].header} (${languageColumns[col].language})`
     ).join(', '));
 
-    // Găsește coloana sursă (prima cu conținut)
+    // Find source column (the one with most content)
     const sourceColumn = this.findSourceColumn(worksheet, range, languageColumns);
     if (!sourceColumn) {
-      throw new Error('Nu a fost găsită o coloană sursă cu text pentru traducere');
+      throw new Error('No source column with text for translation was found');
     }
 
-    console.log(`🎯 Coloană sursă: ${sourceColumn.header} (${sourceColumn.language})`);
+    console.log(`🎯 Source column: ${sourceColumn.header} (${sourceColumn.language})`);
 
-    // Găsește coloanele țintă (goale sau parțial goale)
+    // Find target columns (empty or partially empty)
     const targetColumns = this.findTargetColumns(languageColumns, sourceColumn);
     
     if (targetColumns.length === 0) {
-      throw new Error('Nu au fost găsite coloane țintă pentru traducere');
+      throw new Error('No target columns for translation were found');
     }
 
-    console.log(`🎯 Coloane țintă: ${targetColumns.map(col => 
+    console.log(`🎯 Target columns: ${targetColumns.map(col => 
       `${col.header} (${col.language})`
     ).join(', ')}`);
 
-    // Extrage textele pentru traducere
+    // Extract texts for translation
     const textsToTranslate = this.extractTextsForTranslation(
       worksheet, range, sourceColumn, targetColumns
     );
 
-    console.log(`📝 Găsite ${textsToTranslate.length} texte pentru traducere`);
+    console.log(`📝 Found ${textsToTranslate.length} texts for translation`);
 
     if (textsToTranslate.length === 0) {
-      throw new Error('Nu au fost găsite texte pentru traducere');
+      throw new Error('No texts for translation were found');
     }
 
-    // Traduce textele
+    // Translate texts
     let translatedCount = 0;
     for (const targetColumn of targetColumns) {
-      console.log(`🌐 Traducere în ${targetColumn.language}...`);
+      console.log(`🌐 Translating to ${targetColumn.language}...`);
       
       const textsForThisLanguage = textsToTranslate.filter(t => 
         t.targetColumns.includes(targetColumn.columnIndex)
@@ -94,7 +94,7 @@ class ExcelProcessor {
         targetColumn.language
       );
 
-      // Aplică traducerile în worksheet
+      // Apply translations to worksheet WITH STYLE PRESERVATION
       textsForThisLanguage.forEach((textInfo, index) => {
         if (translations[index]) {
           const targetAddress = XLSX.utils.encode_cell({
@@ -102,16 +102,26 @@ class ExcelProcessor {
             c: targetColumn.columnIndex
           });
           
+          // Find source cell to copy styles from
+          const sourceAddress = XLSX.utils.encode_cell({
+            r: textInfo.row,
+            c: sourceColumn.columnIndex
+          });
+          const sourceCell = worksheet[sourceAddress];
+          
+          // Create target cell preserving original styles
           worksheet[targetAddress] = {
             v: translations[index],
-            t: 's'
+            t: 's',
+            // COPY STYLES from source cell (preserves gray background, etc.)
+            s: sourceCell && sourceCell.s ? { ...sourceCell.s } : undefined
           };
           translatedCount++;
         }
       });
     }
 
-    // Salvează fișierul
+    // Save file
     const outputFilename = `translated_${Date.now()}.xlsx`;
     const outputPath = path.join(this.outputDir, outputFilename);
     
@@ -128,7 +138,7 @@ class ExcelProcessor {
     };
   }
 
-  // Identifică coloanele de limbi din header
+  // Identify language columns from header
   identifyLanguageColumns(worksheet, range) {
     const columns = {};
     
@@ -138,7 +148,7 @@ class ExcelProcessor {
       
       const header = headerCell.v.toString();
       
-      // Caută pattern-ul: număr(cod_limba) ex: 1031(DEU) sau 2057(ENG)
+      // Look for pattern: number(language_code) e.g. 1031(DEU) or 2057(ENG)
       const match = header.match(/^(\d+)\(([A-Z]{3})\)$/);
       if (match) {
         const countryCode = match[1];
@@ -156,7 +166,7 @@ class ExcelProcessor {
     return columns;
   }
 
-  // Găsește coloana sursă (prima cu cel mai mult conținut)
+  // Find source column (the one with most content)
   findSourceColumn(worksheet, range, languageColumns) {
     let bestColumn = null;
     let maxTextCount = 0;
@@ -165,7 +175,7 @@ class ExcelProcessor {
       const column = languageColumns[columnIndex];
       let textCount = 0;
       
-      // Numără textele din această coloană
+      // Count texts in this column
       for (let R = 1; R <= range.e.r; R++) {
         const cellAddress = XLSX.utils.encode_cell({r: R, c: parseInt(columnIndex)});
         const cell = worksheet[cellAddress];
@@ -184,14 +194,14 @@ class ExcelProcessor {
     return bestColumn;
   }
 
-  // Găsește coloanele țintă (cele care nu sunt sursa)
+  // Find target columns (those that are not the source)
   findTargetColumns(languageColumns, sourceColumn) {
     const targets = [];
     
     for (const columnIndex in languageColumns) {
       const column = languageColumns[columnIndex];
       
-      // Skip coloana sursă
+      // Skip source column
       if (column.columnIndex === sourceColumn.columnIndex) continue;
       
       targets.push(column);
@@ -200,7 +210,7 @@ class ExcelProcessor {
     return targets;
   }
 
-  // Extrage textele care trebuie traduse
+  // Extract texts that need to be translated
   extractTextsForTranslation(worksheet, range, sourceColumn, targetColumns) {
     const texts = [];
     
@@ -210,7 +220,7 @@ class ExcelProcessor {
       
       if (!this.shouldTranslateCell(sourceCell)) continue;
       
-      // Verifică care coloane țintă sunt goale pentru această linie
+      // Check which target columns are empty for this row
       const emptyTargetColumns = targetColumns.filter(targetCol => {
         const targetAddress = XLSX.utils.encode_cell({r: R, c: targetCol.columnIndex});
         const targetCell = worksheet[targetAddress];
@@ -230,23 +240,23 @@ class ExcelProcessor {
     return texts;
   }
 
-  // Verifică dacă o celulă trebuie tradusă
+  // Check if a cell should be translated
   shouldTranslateCell(cell) {
     if (!cell || !cell.v) return false;
     
     const text = cell.v.toString().trim();
     if (!text || text.length < 2) return false;
     
-    // Skip numerele pure
+    // Skip pure numbers
     if (/^\d+$/.test(text)) return false;
     
-    // Skip celulele cu background gri
+    // Skip cells with gray background
     if (this.hasGrayBackground(cell)) return false;
     
     return true;
   }
 
-  // Verifică dacă celula are background gri
+  // Check if cell has gray background
   hasGrayBackground(cell) {
     if (!cell.s || !cell.s.patternType) return false;
     
@@ -256,10 +266,10 @@ class ExcelProcessor {
            cell.s.fgColor.tint < 0;
   }
 
-  // Test configurația
+  // Test configuration
   async testConfiguration() {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY nu este configurat în .env');
+      throw new Error('OPENAI_API_KEY is not configured in .env');
     }
     
     await this.translationService.testConnection();
