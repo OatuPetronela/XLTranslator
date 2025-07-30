@@ -16,7 +16,7 @@ class TranslationService {
       'ESP': 'Spanish',
       'POR': 'Portuguese',
       'NLD': 'Dutch',
-      'SWE': 'Swedish',
+      'SVE': 'Swedish',
       'NOR': 'Norwegian',
       'DAN': 'Danish',
       'FIN': 'Finnish',
