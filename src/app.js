@@ -67,7 +67,11 @@ app.post('/api/translate', upload.single('excelFile'), async (req, res) => {
   } catch (error) {
     // Delete uploaded file in case of error
     if (req.file) {
-      fs.removeSync(req.file.path).catch(() => {});
+      try {
+        fs.removeSync(req.file.path);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
     }
     
     res.status(500).json({ 

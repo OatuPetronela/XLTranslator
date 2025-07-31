@@ -10,7 +10,7 @@
   "dependencies": {
     "express": "^5.1.0",
     "multer": "^2.0.1",
-    "xlsx": "^0.18.5",
+    "exceljs": "^4.4.0",
     "openai": "^4.104.0",
     "dotenv": "^17.0.1",
     "cors": "^2.8.5",
