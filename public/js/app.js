@@ -296,7 +296,7 @@ class XLTranslatorApp {
   showWelcome(user) {
     this.navActions.innerHTML = `
       <div class="user-info">
-        <span>Welcome, ${user.name || user.email}!</span>
+        <span>Welcome!</span>
         <button class="logout-btn" onclick="app.logout()">
           <i class="fas fa-sign-out-alt"></i>
           Logout
