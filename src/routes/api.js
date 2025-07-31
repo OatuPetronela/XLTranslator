@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs-extra');
-const { requiresAuth } = require('express-openid-connect');
+const { requireAuth } = require('../middleware/auth');
 const ExcelProcessor = require('../services/ExcelProcessor');
 const { configureMulter } = require('../middleware/multer');
 
@@ -9,7 +9,7 @@ const router = express.Router();
 const upload = configureMulter();
 const processor = new ExcelProcessor();
 
-router.post('/translate', requiresAuth(), upload.single('excelFile'), async (req, res) => {
+router.post('/translate', requireAuth, upload.single('excelFile'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No Excel file was uploaded' });
@@ -24,7 +24,7 @@ router.post('/translate', requiresAuth(), upload.single('excelFile'), async (req
       message: 'Translation completed successfully!',
       downloadUrl: `/api/download/${result.filename}`,
       stats: result.stats,
-      user: req.oidc.user.email 
+      user: req.session.userEmail 
     });
 
   } catch (error) {
@@ -43,7 +43,7 @@ router.post('/translate', requiresAuth(), upload.single('excelFile'), async (req
   }
 });
 
-router.get('/download/:filename', requiresAuth(), (req, res) => {
+router.get('/download/:filename', requireAuth, (req, res) => {
   const filePath = path.join(__dirname, '../../output', req.params.filename);
   
   if (fs.existsSync(filePath)) {
@@ -69,8 +69,8 @@ router.get('/test', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Configuration is OK!',
-      authenticated: req.oidc.isAuthenticated(),
-      user: req.oidc.isAuthenticated() ? req.oidc.user.email : null
+      authenticated: req.session && req.session.authenticated,
+      user: req.session && req.session.authenticated ? req.session.userEmail : null
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

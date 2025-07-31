@@ -484,6 +484,52 @@ body {
   border-left: 4px solid var(--warning-color);
 }
 
+/* Login Form Styles */
+.login-form {
+  max-width: 400px;
+  margin: 2rem auto 0;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  background: var(--surface);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.login-error {
+  background: #fef2f2;
+  color: var(--error-color);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #fecaca;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
 .success h3 {
   color: var(--success-color);
   font-size: 1.5rem;

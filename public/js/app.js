@@ -194,26 +194,92 @@ class XLTranslatorApp {
     }
   }
 
+  attachLoginFormListener() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+    }
+  }
+
+  async handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Reload the page to refresh the authentication state
+        window.location.reload();
+      } else {
+        errorDiv.textContent = result.message;
+        errorDiv.style.display = 'block';
+      }
+    } catch (error) {
+      errorDiv.textContent = 'Login failed. Please try again.';
+      errorDiv.style.display = 'block';
+    }
+  }
+
+  async logout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.reload();
+    } catch (error) {
+      console.error('Logout failed:', error);
+      window.location.reload(); // Reload anyway
+    }
+  }
+
   showLoginRequired() {
-    this.navActions.innerHTML = `
-      <a href="/login" class="login-btn">
-        <i class="fas fa-sign-in-alt"></i>
-        Login
-      </a>
-    `;
+    this.navActions.innerHTML = '';
     
     this.resultSection.style.display = 'block';
     this.resultContent.innerHTML = `
       <div class="login-required">
         <h3><i class="fas fa-lock"></i> Authentication Required</h3>
-        <p>Please login with your Auth0 account to use the Excel Translator</p>
-        <a href="/login" class="login-btn">
-          <i class="fas fa-sign-in-alt"></i>
-          Login with Auth0
-        </a>
+        <p>Please enter your credentials to access the Excel Translator</p>
+        
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="email">
+              <i class="fas fa-envelope"></i>
+              Email
+            </label>
+            <input type="email" id="email" name="email" required placeholder="Enter your email">
+          </div>
+          
+          <div class="form-group">
+            <label for="password">
+              <i class="fas fa-lock"></i>
+              Password
+            </label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
+          </div>
+          
+          <button type="submit" class="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            Login
+          </button>
+          
+          <div id="loginError" class="login-error" style="display: none;"></div>
+        </form>
       </div>
     `;
+    
     this.uploadForm.style.display = 'none';
+    this.attachLoginFormListener();
   }
 
   showConfigError(error) {
@@ -231,10 +297,10 @@ class XLTranslatorApp {
     this.navActions.innerHTML = `
       <div class="user-info">
         <span>Welcome, ${user.name || user.email}!</span>
-        <a href="/logout" class="logout-btn">
+        <button class="logout-btn" onclick="app.logout()">
           <i class="fas fa-sign-out-alt"></i>
           Logout
-        </a>
+        </button>
       </div>
     `;
     
@@ -259,6 +325,8 @@ function removeFile() {
   translateBtn.disabled = true;
 }
 
+let app;
+
 document.addEventListener('DOMContentLoaded', () => {
-  new XLTranslatorApp();
+  app = new XLTranslatorApp();
 });
