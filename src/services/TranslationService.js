@@ -96,10 +96,8 @@ class TranslationService {
 
   // Translate a batch of texts
   async translateBatch(texts, sourceLanguage, targetLanguage) {
-    // Prepare texts for translation (replace tags with placeholders)
     const preparedTexts = texts.map(text => this.prepareTextForTranslation(text));
     
-    // Create the prompt
     const textList = preparedTexts.map((prepared, index) => 
       `${index + 1}. ${prepared.preparedText}`
     ).join('\n');
@@ -119,56 +117,45 @@ ${textList}
 
 Respond ONLY with numbered translations, no explanations:`;
 
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          {
-            role: "system",
-            content: "You are a professional translator specialized in interface and application translation. You strictly follow instructions regarding placeholder preservation and formatting."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 3000
-      });
-
-      const rawTranslations = this.parseResponse(response.choices[0].message.content);
-      
-      // Restore tags in translations
-      const finalTranslations = rawTranslations.map((translation, index) => {
-        if (translation && preparedTexts[index]) {
-          return this.restoreTagsInTranslation(
-            translation, 
-            preparedTexts[index].placeholderMap
-          );
+    const response = await this.openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional translator specialized in interface and application translation. You strictly follow instructions regarding placeholder preservation and formatting."
+        },
+        {
+          role: "user",
+          content: prompt
         }
-        return translation;
-      });
+      ],
+      temperature: 0.2,
+      max_tokens: 3000
+    });
 
-      return finalTranslations;
+    const rawTranslations = this.parseResponse(response.choices[0].message.content);
+    
+    const finalTranslations = rawTranslations.map((translation, index) => {
+      if (translation && preparedTexts[index]) {
+        return this.restoreTagsInTranslation(
+          translation, 
+          preparedTexts[index].placeholderMap
+        );
+      }
+      return translation;
+    });
 
-    } catch (error) {
-      throw error;
-    }
+    return finalTranslations;
   }
 
-  // Prepare text for translation (replace tags with placeholders)
   prepareTextForTranslation(text) {
     let preparedText = text;
     const placeholderMap = new Map();
     let tagIndex = 0;
     
-    // HTML tags pattern
     const htmlPattern = /<[^>]+>/g;
-    
-    // Askia scripts pattern: !!something!!
     const askiaPattern = /!!([^!]+)!!/g;
     
-    // Replace HTML tags
     preparedText = preparedText.replace(htmlPattern, (match) => {
       const placeholder = `__TAG_${tagIndex}__`;
       placeholderMap.set(placeholder, match);
@@ -176,7 +163,6 @@ Respond ONLY with numbered translations, no explanations:`;
       return placeholder;
     });
     
-    // Replace Askia scripts
     preparedText = preparedText.replace(askiaPattern, (match) => {
       const placeholder = `__TAG_${tagIndex}__`;
       placeholderMap.set(placeholder, match);
@@ -190,11 +176,9 @@ Respond ONLY with numbered translations, no explanations:`;
     };
   }
 
-  // Restore tags in translated text
   restoreTagsInTranslation(translatedText, placeholderMap) {
     let restoredText = translatedText;
     
-    // Replace each placeholder with original tag
     for (let [placeholder, originalTag] of placeholderMap) {
       restoredText = restoredText.replace(placeholder, originalTag);
     }
@@ -202,13 +186,11 @@ Respond ONLY with numbered translations, no explanations:`;
     return restoredText;
   }
 
-  // Parse AI response
   parseResponse(response) {
     const translations = [];
     const lines = response.trim().split('\n');
     
     for (const line of lines) {
-      // Look for pattern: number. text
       const match = line.match(/^\s*(\d+)\.\s*(.+)$/);
       if (match) {
         const index = parseInt(match[1]) - 1;
@@ -220,22 +202,16 @@ Respond ONLY with numbered translations, no explanations:`;
     return translations;
   }
 
-  // Test connection with OpenAI
   async testConnection() {
-    try {
-      await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: "Hello, test connection" }],
-        max_tokens: 10
-      });
-      
-      return true;
-    } catch (error) {
-      throw new Error(`OpenAI connection failed: ${error.message}`);
-    }
+    await this.openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: "Hello, test connection" }],
+      max_tokens: 10
+    });
+    
+    return true;
   }
 
-  // Helper function for pause
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }

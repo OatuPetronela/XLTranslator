@@ -3,392 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XLTranslator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.2em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-
-        .main-content {
-            padding: 40px;
-        }
-
-        .upload-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .file-upload {
-            position: relative;
-            display: inline-block;
-            margin-bottom: 20px;
-        }
-
-        .file-upload input[type=file] {
-            display: none;
-        }
-
-        .file-upload-btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1.1em;
-            transition: transform 0.2s;
-            border: none;
-            font-weight: 500;
-        }
-
-        .file-upload-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .file-info {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .translate-btn {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin-top: 20px;
-            font-weight: 500;
-        }
-
-        .translate-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .translate-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .progress-section {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #eee;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        .result-section {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .success {
-            color: #28a745;
-        }
-
-        .error {
-            color: #dc3545;
-        }
-
-        .download-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 20px;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 15px;
-            font-weight: 500;
-            transition: transform 0.2s;
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .info-box h3 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .info-box ul {
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4facfe;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .stats {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            text-align: left;
-        }
-
-        .stats h4 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .stats p {
-            margin: 5px 0;
-            color: #666;
-        }
-    </style>
+    <title>XLTranslator | AI-Powered Excel Translation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌐 XLTranslator</h1>
-            <p>Automatic Excel file translation</p>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-language brand-icon"></i>
+                <span class="brand-text">XLTranslator</span>
+            </div>
+            <div class="nav-actions" id="navActions">
+                <!-- Auth info will be injected here -->
+            </div>
         </div>
+    </nav>
 
-        <div class="main-content">
-            <div class="info-box">
-                <h3>📋 How it works:</h3>
-                <ul>
-                    <li>Upload Excel files with country codes e.g.: <strong>1031(DEU)</strong>, <strong>1036(FRA)</strong>, etc.</li>
-                    <li>The application automatically identifies the source column</li>
-                    <li>Texts with <strong>gray background</strong> are ignored</li>
-                    <li>HTML tags and Askia scripts (e.g.:<strong>!!RT("TXT:41")!!</strong>, <strong>!!ON(...)!!</strong>) are preserved intact</li>
-                    <li>Translation is done automatically to all available languages in the file</li>
-                </ul>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <i class="fas fa-magic"></i>
+                    AI-Powered Excel Translation
+                </h1>
+                <p class="hero-subtitle">
+                    Translate your Excel files automatically while preserving formatting and special codes
+                </p>
             </div>
+        </section>
 
-            <div class="upload-section">
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <div class="file-upload">
-                        <label for="excelFile" class="file-upload-btn">
-                            📁 Choose Excel File
-                        </label>
-                        <input type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required>
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <h3>Excel Compatible</h3>
+                        <p>Supports .xlsx and .xls files with full formatting preservation</p>
                     </div>
-                    
-                    <div id="fileInfo" class="file-info">
-                        <p id="fileName">No file selected</p>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h3>Code Preservation</h3>
+                        <p>Maintains HTML tags and Askia scripts like !!RT("TXT:41")!!</p>
                     </div>
-
-                    <br>
-                    <button type="submit" class="translate-btn" id="translateBtn" disabled>
-                        🚀 Start Translation
-                    </button>
-                </form>
-            </div>
-
-            <div id="progressSection" class="progress-section">
-                <div class="spinner"></div>
-                <p id="progressText">Processing file...</p>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <h3>Format Intact</h3>
+                        <p>Gray backgrounds and cell formatting remain unchanged</p>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div id="resultSection" class="result-section">
-                <div id="resultContent"></div>
+        <!-- Upload Section -->
+        <section class="upload-section">
+            <div class="container">
+                <div class="upload-card" id="uploadCard">
+                    <div class="upload-header">
+                        <h2>
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Upload Your Excel File
+                        </h2>
+                        <p>Choose your Excel file with country codes (e.g., 1031(DEU), 1036(FRA))</p>
+                    </div>
+
+                    <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+                        <div class="file-drop-zone" id="fileDropZone">
+                            <div class="file-drop-content">
+                                <i class="fas fa-cloud-upload-alt drop-icon"></i>
+                                <h3>Drag & Drop your file here</h3>
+                                <p>or click to browse</p>
+                                <input type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls" required hidden>
+                                <button type="button" class="browse-btn" id="browseBtn">
+                                    <i class="fas fa-folder-open"></i>
+                                    Browse Files
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="fileInfo" class="file-info" style="display: none;">
+                            <div class="file-preview">
+                                <i class="fas fa-file-excel file-icon"></i>
+                                <div class="file-details">
+                                    <p id="fileName" class="file-name">No file selected</p>
+                                    <p id="fileSize" class="file-size"></p>
+                                </div>
+                                <button type="button" class="remove-file" onclick="removeFile()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="translate-btn" id="translateBtn" disabled>
+                            <i class="fas fa-language"></i>
+                            <span>Start Translation</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progressSection" class="progress-section" style="display: none;">
+            <div class="container">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <div class="progress-spinner"></div>
+                        <h3 id="progressText">Processing your file...</h3>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-note">This may take a few moments depending on file size</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section id="resultSection" class="result-section" style="display: none;">
+            <div class="container">
+                <div id="resultContent" class="result-content">
+                    <!-- Results will be inserted here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-language"></i>
+                    <span>XLTranslator</span>
+                </div>
+                <p class="footer-text">
+                    Powered by AI • Secure • Fast • Reliable
+                </p>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <script>
-        const fileInput = document.getElementById('excelFile');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const translateBtn = document.getElementById('translateBtn');
-        const uploadForm = document.getElementById('uploadForm');
-        const progressSection = document.getElementById('progressSection');
-        const resultSection = document.getElementById('resultSection');
-        const progressText = document.getElementById('progressText');
-        const progressFill = document.getElementById('progressFill');
-        const resultContent = document.getElementById('resultContent');
-
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                fileName.textContent = `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-                fileInfo.style.display = 'block';
-                translateBtn.disabled = false;
-            } else {
-                fileInfo.style.display = 'none';
-                translateBtn.disabled = true;
-            }
-        });
-
-        uploadForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData();
-            formData.append('excelFile', fileInput.files[0]);
-            
-            progressSection.style.display = 'block';
-            resultSection.style.display = 'none';
-            translateBtn.disabled = true;
-            
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 90) progress = 90;
-                progressFill.style.width = progress + '%';
-            }, 500);
-
-            try {
-                progressText.textContent = 'Uploading file...';
-                
-                const response = await fetch('/api/translate', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                
-                clearInterval(progressInterval);
-                progressFill.style.width = '100%';
-                
-                setTimeout(() => {
-                    progressSection.style.display = 'none';
-                    showResult(result, response.ok);
-                }, 500);
-
-            } catch (error) {
-                clearInterval(progressInterval);
-                progressSection.style.display = 'none';
-                showResult({ error: 'Connection error: ' + error.message }, false);
-            }
-            
-            translateBtn.disabled = false;
-        });
-
-        function showResult(result, success) {
-            resultSection.style.display = 'block';
-            
-            if (success && result.success) {
-                resultContent.innerHTML = `
-                    <div class="success">
-                        <h3>✅ Translation completed successfully!</h3>
-                        <a href="${result.downloadUrl}" class="download-btn">
-                            📥 Download Translated File
-                        </a>
-                        <div class="stats">
-                            <h4>📊 Statistics:</h4>
-                            <p><strong>Source Column:</strong> ${result.stats.sourceColumn}</p>
-                            <p><strong>Target Columns:</strong> ${result.stats.targetColumns.join(', ')}</p>
-                            <p><strong>Texts Found:</strong> ${result.stats.textsFound}</p>
-                            <p><strong>Translations Applied:</strong> ${result.stats.translationsApplied}</p>
-                        </div>
-                    </div>
-                `;
-            } else {
-                resultContent.innerHTML = `
-                    <div class="error">
-                        <h3>❌ Error processing file</h3>
-                        <p>${result.error || 'Unknown error'}</p>
-                        ${result.details ? `<p><small>${result.details}</small></p>` : ''}
-                    </div>
-                `;
-            }
-        }
-
-        // Test API configuration on page load
-        fetch('/api/test')
-            .then(response => response.json())
-            .then(result => {
-                if (!result.success) {
-                    resultSection.style.display = 'block';
-                    resultContent.innerHTML = `
-                        <div class="error">
-                            <h3>⚠️ Incomplete Configuration</h3>
-                            <p>${result.error}</p>
-                            <p><small>Check .env file and restart application</small></p>
-                        </div>
-                    `;
-                }
-            })
-            .catch(() => {
-                // Silent fail - API might not be ready yet
-            });
-    </script>
+    <script src="/js/app.js"></script>
 </body>
 </html>
