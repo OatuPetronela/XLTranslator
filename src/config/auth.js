@@ -5,12 +5,19 @@ const validateAuth0Config = () => {
   const missing = requiredVars.filter(varName => !process.env[varName]);
   
   if (missing.length > 0) {
-    throw new Error(`Missing Auth0 configuration: ${missing.join(', ')}`);
+    console.warn(`⚠️ Missing Auth0 configuration: ${missing.join(', ')}`);
+    console.warn('Authentication will be disabled. Set these environment variables to enable Auth0.');
+    return false;
   }
+  return true;
 };
 
 const getAuth0Config = (port) => {
-  validateAuth0Config();
+  const isValid = validateAuth0Config();
+  
+  if (!isValid) {
+    return null; // Return null when Auth0 is not configured
+  }
   
   return {
     authRequired: false,
