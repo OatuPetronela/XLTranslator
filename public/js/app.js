@@ -207,6 +207,12 @@ class XLTranslatorApp {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+    errorDiv.style.display = 'none';
     
     try {
       const response = await fetch('/api/auth/login', {
@@ -220,15 +226,29 @@ class XLTranslatorApp {
       const result = await response.json();
       
       if (result.success) {
-        // Reload the page to refresh the authentication state
-        window.location.reload();
+        // Show success message briefly
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Success!';
+        
+        // Hide login form and show welcome screen immediately
+        setTimeout(() => {
+          this.showWelcome(result.user);
+          this.uploadForm.style.display = 'block';
+        }, 500);
       } else {
-        errorDiv.textContent = result.message;
+        errorDiv.textContent = result.message || 'Login failed';
         errorDiv.style.display = 'block';
+        
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
       }
     } catch (error) {
       errorDiv.textContent = 'Login failed. Please try again.';
       errorDiv.style.display = 'block';
+      
+      // Reset button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
     }
   }
 

@@ -1,4 +1,3 @@
-require('dotenv').config();
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 
@@ -15,6 +14,7 @@ const checkCredentials = async (email, password) => {
   const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
   
   if (!adminEmail || !adminPasswordHash) {
+    console.error('Authentication configuration missing');
     throw new Error('Authentication configuration missing');
   }
   
@@ -23,7 +23,8 @@ const checkCredentials = async (email, password) => {
   }
   
   try {
-    return await bcrypt.compare(password, adminPasswordHash);
+    const isPasswordValid = await bcrypt.compare(password, adminPasswordHash);
+    return isPasswordValid;
   } catch (error) {
     console.error('Password comparison error:', error);
     return false;
@@ -34,11 +35,13 @@ const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // limit each IP to 5 requests per windowMs
   message: {
-    error: 'Too many login attempts, please try again later.',
+    success: false,
+    message: 'Too many login attempts, please try again later.',
     retryAfter: '15 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: process.env.NODE_ENV === 'production',
 });
 
 module.exports = {

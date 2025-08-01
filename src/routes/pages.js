@@ -5,6 +5,7 @@ const fs = require('fs-extra');
 const router = express.Router();
 
 router.get('/', (req, res) => {
+  
   const indexPath = path.join(__dirname, '../../public/index.html');
   let html = fs.readFileSync(indexPath, 'utf8');
   
@@ -181,6 +182,10 @@ router.get('/login', (req, res) => {
                 const errorDiv = document.getElementById('loginError');
                 
                 try {
+                    // Clear previous errors
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                    
                     const response = await fetch('/api/auth/login', {
                         method: 'POST',
                         headers: {
@@ -192,13 +197,16 @@ router.get('/login', (req, res) => {
                     const result = await response.json();
                     
                     if (result.success) {
-                        window.location.href = '/';
+                        console.log('✅ Login successful, redirecting to home...');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 100);
                     } else {
-                        errorDiv.textContent = result.message;
+                        errorDiv.textContent = result.message || 'Login failed. Please try again.';
                         errorDiv.style.display = 'block';
                     }
                 } catch (error) {
-                    errorDiv.textContent = 'Login failed. Please check your connection and try again.';
+                    errorDiv.textContent = 'Connection error. Please check your internet and try again.';
                     errorDiv.style.display = 'block';
                 }
             });
