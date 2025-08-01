@@ -27,15 +27,23 @@ if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH || !process.env
 }
 
 // Session configuration
-app.use(session({
+const sessionConfig = {
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true
   }
-}));
+};
+
+// Use a simple file-based session store for production to avoid MemoryStore warnings
+if (process.env.NODE_ENV === 'production') {
+  sessionConfig.cookie.sameSite = 'strict';
+}
+
+app.use(session(sessionConfig));
 
 app.use(express.static('public'));
 
@@ -43,6 +51,23 @@ app.use('/', pageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('📴 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('📴 SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
