@@ -9,7 +9,6 @@ class ExcelProcessor {
     this.outputDir = path.join(__dirname, '../../output');
     fs.ensureDirSync(this.outputDir);
     
-    // Country code to language mapping from Askia
     this.countryToLanguage = {
       '1025': 'ARA', '1026': 'BGR', '1027': 'CAT', '1028': 'CHT', '1029': 'CSY',
       '1030': 'DAN', '1031': 'DEU', '1032': 'ELL', '1033': 'ENU', '1034': 'ESP',
@@ -46,21 +45,19 @@ class ExcelProcessor {
       throw new Error('No target columns for translation were found');
     }
 
-    // Copy styles (including gray backgrounds) to target columns
-    this.copyStylesToTargets(worksheet, sourceColumn, targetColumns);
-
     const textsToTranslate = this.extractTextsForTranslation(worksheet, sourceColumn, targetColumns);
 
     if (textsToTranslate.length === 0) {
       throw new Error('No texts for translation were found');
     }
 
-    // Translate texts to each target language
     let translatedCount = 0;
     for (const targetColumn of targetColumns) {
       const textsForThisLanguage = textsToTranslate.filter(t => 
         t.targetColumns.includes(targetColumn.columnIndex)
       );
+
+      if (textsForThisLanguage.length === 0) continue;
 
       const translations = await this.translationService.translateTexts(
         textsForThisLanguage.map(t => t.text),
@@ -68,7 +65,6 @@ class ExcelProcessor {
         targetColumn.language
       );
 
-      // Apply translations while preserving existing styles
       textsForThisLanguage.forEach((textInfo, index) => {
         if (translations[index]) {
           const targetCell = worksheet.getCell(textInfo.row + 1, targetColumn.columnIndex + 1);
@@ -78,7 +74,6 @@ class ExcelProcessor {
       });
     }
 
-    // Save processed file
     const outputFilename = `translated_${Date.now()}.xlsx`;
     const outputPath = path.join(this.outputDir, outputFilename);
     
@@ -95,25 +90,49 @@ class ExcelProcessor {
     };
   }
 
-  copyStylesToTargets(worksheet, sourceColumn, targetColumns) {
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // Skip header
+  hasGrayBackground(cell) {
+    if (!cell.fill || cell.fill.type !== 'pattern') return false;
+    
+    const fill = cell.fill;
+    
+    if (fill.fgColor) {
+      // Check theme colors with tint
+      if (fill.fgColor.theme !== undefined && fill.fgColor.tint !== undefined) {
+        if (fill.fgColor.theme === 0 && fill.fgColor.tint < -0.05) return true;
+        if (fill.fgColor.theme === 1 && fill.fgColor.tint < -0.1) return true;
+      }
       
-      const sourceCell = row.getCell(sourceColumn.columnIndex + 1);
-      
-      targetColumns.forEach(targetColumn => {
-        const targetCell = row.getCell(targetColumn.columnIndex + 1);
+      // Check common gray RGB values
+      if (fill.fgColor.argb) {
+        const grayColors = [
+          'ffc0c0c0', 'ffd3d3d3', 'ffa9a9a9', 'ff808080', 'ff696969',
+          'ff778899', 'ff2f4f4f', 'fff5f5f5', 'fff0f0f0', 'ffe0e0e0',
+          'ffcccccc', 'ffb8b8b8', 'ff999999', 'ff666666'
+        ];
         
-        // Only copy styles to empty cells
-        if (!targetCell.value || !targetCell.value.toString().trim()) {
-          if (sourceCell.fill) targetCell.fill = { ...sourceCell.fill };
-          if (sourceCell.font) targetCell.font = { ...sourceCell.font };
-          if (sourceCell.alignment) targetCell.alignment = { ...sourceCell.alignment };
-          if (sourceCell.border) targetCell.border = { ...sourceCell.border };
-          if (sourceCell.numFmt) targetCell.numFmt = sourceCell.numFmt;
-        }
-      });
-    });
+        if (grayColors.includes(fill.fgColor.argb.toLowerCase())) return true;
+      }
+    }
+    
+    return fill.bgColor && fill.bgColor.theme === 0;
+  }
+
+  shouldTranslateCell(cell) {
+    if (!cell.value) return false;
+    
+    const text = cell.value.toString().trim();
+    if (!text || text.length < 2) return false;
+    
+    // Skip pure numbers
+    if (/^\d+(\.\d+)?$/.test(text)) return false;
+    
+    // Skip very short non-alphabetic text
+    if (text.length < 3 && !/[a-zA-ZăâîșțĂÂÎȘȚàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿ]/.test(text)) return false;
+    
+    // Skip cells with gray background
+    if (this.hasGrayBackground(cell)) return false;
+    
+    return true;
   }
 
   identifyLanguageColumns(worksheet) {
@@ -124,9 +143,8 @@ class ExcelProcessor {
       if (!cell.value) return;
       
       const header = cell.value.toString().trim();
-      
-      // Look for pattern: number(language_code) e.g. 1031(DEU)
       const match = header.match(/^(\d+)\(([A-Z]{3})\)$/);
+      
       if (match) {
         const countryCode = match[1];
         const langCode = match[2];
@@ -154,7 +172,7 @@ class ExcelProcessor {
       let textCount = 0;
       
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) return; // Skip header
+        if (rowNumber === 1) return;
         
         const cell = row.getCell(parseInt(columnIndex) + 1);
         if (this.shouldTranslateCell(cell)) {
@@ -177,9 +195,9 @@ class ExcelProcessor {
     for (const columnIndex in languageColumns) {
       const column = languageColumns[columnIndex];
       
-      if (column.columnIndex === sourceColumn.columnIndex) continue;
-      
-      targets.push(column);
+      if (column.columnIndex !== sourceColumn.columnIndex) {
+        targets.push(column);
+      }
     }
     
     return targets;
@@ -189,16 +207,16 @@ class ExcelProcessor {
     const texts = [];
     
     worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // Skip header
+      if (rowNumber === 1) return;
       
       const sourceCell = row.getCell(sourceColumn.columnIndex + 1);
       
       if (!this.shouldTranslateCell(sourceCell)) return;
       
-      // Check which target columns are empty for this row
       const emptyTargetColumns = targetColumns.filter(targetCol => {
         const targetCell = row.getCell(targetCol.columnIndex + 1);
-        return !targetCell.value || !targetCell.value.toString().trim();
+        const cellValue = targetCell.value;
+        return !cellValue || !cellValue.toString().trim();
       });
       
       if (emptyTargetColumns.length > 0) {
@@ -212,35 +230,6 @@ class ExcelProcessor {
     });
     
     return texts;
-  }
-
-  shouldTranslateCell(cell) {
-    if (!cell.value) return false;
-    
-    const text = cell.value.toString().trim();
-    if (!text || text.length < 2) return false;
-    
-    // Skip pure numbers
-    if (/^\d+$/.test(text)) return false;
-    
-    // Skip cells with gray background - they should not be translated
-    if (this.hasGrayBackground(cell)) return false;
-    
-    return true;
-  }
-
-  hasGrayBackground(cell) {
-    if (!cell.fill) return false;
-    
-    // Check for gray background pattern
-    if (cell.fill.type === 'pattern' && cell.fill.pattern === 'solid') {
-      const fgColor = cell.fill.fgColor;  
-      if (fgColor && fgColor.theme === 0 && fgColor.tint && fgColor.tint < -0.1) {
-        return true;
-      }
-    }
-    
-    return false;
   }
 
   async testConfiguration() {
