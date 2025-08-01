@@ -1,4 +1,6 @@
 require('dotenv').config();
+const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
 
 const requireAuth = (req, res, next) => {
   if (req.session && req.session.authenticated) {
@@ -8,14 +10,39 @@ const requireAuth = (req, res, next) => {
   }
 };
 
-const checkCredentials = (email, password) => {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@xltranslator.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'SecurePassword123!';
+const checkCredentials = async (email, password) => {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
   
-  return email === adminEmail && password === adminPassword;
+  if (!adminEmail || !adminPasswordHash) {
+    throw new Error('Authentication configuration missing');
+  }
+  
+  if (email !== adminEmail) {
+    return false;
+  }
+  
+  try {
+    return await bcrypt.compare(password, adminPasswordHash);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 };
+
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    error: 'Too many login attempts, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 module.exports = {
   requireAuth,
-  checkCredentials
+  checkCredentials,
+  loginRateLimit
 };

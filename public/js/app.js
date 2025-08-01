@@ -237,7 +237,6 @@ class XLTranslatorApp {
       await fetch('/api/auth/logout', { method: 'POST' });
       window.location.reload();
     } catch (error) {
-      console.error('Logout failed:', error);
       window.location.reload(); // Reload anyway
     }
   }

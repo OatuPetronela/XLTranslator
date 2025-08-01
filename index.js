@@ -32,7 +32,5 @@ app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Excel AI Translator running on port ${PORT}`);
-  console.log(`🌐 Open: http://localhost:${PORT}`);
-  console.log(`📧 Admin email: ${process.env.ADMIN_EMAIL || 'admin@xltranslator.com'}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -8,19 +8,26 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-    "express": "^5.1.0",
-    "multer": "^2.0.1",
-    "exceljs": "^4.4.0",
-    "openai": "^4.104.0",
-    "dotenv": "^17.0.1",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "express-session": "^1.17.3",
     "fs-extra": "^11.1.1",
-    "express-session": "^1.17.3"
+    "multer": "^2.0.1",
+    "openai": "^4.104.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
-  "keywords": ["translation", "excel", "ai", "automation"],
+  "keywords": [
+    "translation",
+    "excel",
+    "ai",
+    "automation"
+  ],
   "author": "Your Name",
   "license": "MIT"
 }
