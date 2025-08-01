@@ -14,13 +14,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Validate required environment variables
+if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH || !process.env.SESSION_SECRET) {
+  console.error('❌ Missing authentication configuration. Please check your environment variables.');
+  console.error('Required variables: ADMIN_EMAIL, ADMIN_PASSWORD_HASH, SESSION_SECRET');
+  process.exit(1);
+}
+
 // Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'xl-translator-session-secret',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));

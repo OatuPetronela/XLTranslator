@@ -1,5 +1,5 @@
 const express = require('express');
-const { checkCredentials } = require('../middleware/auth');
+const { checkCredentials, loginRateLimit } = require('../middleware/auth');
 const router = express.Router();
 
 // Check authentication status
@@ -18,21 +18,30 @@ router.get('/user', (req, res) => {
 });
 
 // Login endpoint
-router.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  if (checkCredentials(email, password)) {
-    req.session.authenticated = true;
-    req.session.userEmail = email;
-    res.json({ 
-      success: true, 
-      message: 'Login successful',
-      user: { name: 'Admin', email: email }
-    });
-  } else {
-    res.status(401).json({ 
+router.post('/login', loginRateLimit, async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const isValid = await checkCredentials(email, password);
+    
+    if (isValid) {
+      req.session.authenticated = true;
+      req.session.userEmail = email;
+      res.json({ 
+        success: true, 
+        message: 'Login successful',
+        user: { name: 'Admin', email: email }
+      });
+    } else {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password' 
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ 
       success: false, 
-      message: 'Invalid email or password' 
+      message: 'Authentication system error' 
     });
   }
 });
